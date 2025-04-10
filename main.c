@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stdio.h"
+#include "string.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -96,23 +97,23 @@ int main(void)
   /* USER CODE BEGIN 2 */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-
-  HAL_TIM_Base_Start(&htim16);
   uint8_t data = 0;
   uint8_t buffer[6];
+  uint8_t receive[4];
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-		if (__HAL_TIM_GET_COUNTER(&htim16) == 100) {
-			//HAL_UART_Transmit(&huart2, &data, sizeof(uint8_t), HAL_MAX_DELAY);
-			sprintf((char *)buffer, "%03u\r\n", data);
-			HAL_UART_Transmit(&huart2, buffer, 6, HAL_MAX_DELAY);
-			data++;
-			__HAL_TIM_SET_COUNTER(&htim16, 0);
-		}
+   {
+	  HAL_UART_Receive(&huart2, receive, 4, 250);
+	  receive[3] = '\0';
+      if (strcmp((char *)receive, "E15") == 0) {
+          // If the data matches, send the formatted value of 'data'
+          sprintf((char *)buffer, "%03u\r\n", data);
+          HAL_UART_Transmit(&huart2, buffer, 6, 250);
+          data++;
+      }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
