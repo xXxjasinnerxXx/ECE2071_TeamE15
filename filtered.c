@@ -109,7 +109,7 @@ int main(void)
   uint8_t* receive = (uint8_t*)malloc(255 * sizeof(uint8_t)); // Max of 255 chars
   uint8_t* receiveCopy = (uint8_t*)malloc(255 * sizeof(uint8_t));
 
-  uint8_t channel = 2;
+  uint8_t channel = 1;
 
   uint32_t rawID = HAL_GetUIDw0();
   uint8_t id = rawID & 8; // Get the 4 bits (hence it never goes over 10)
@@ -132,10 +132,10 @@ int main(void)
 
 			free(currentChar);
 
+			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 1);
 
 			HAL_Delay(250);
-			channel = 2;
-			HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+			//channel = 2;
 
 			memcpy(receiveCopy, receive, msgLength);
 
@@ -151,8 +151,9 @@ int main(void)
 				receiveCopy[0] = (stmsAdded + 1) + 48;
 				receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
 
-				//HAL_UART_Transmit(&huart1, receiveCopy, msgLength, HAL_MAX_DELAY);
-				HAL_UART_Transmit(&huart2, receiveCopy, msgLength, HAL_MAX_DELAY);
+				HAL_UART_Transmit(&huart1, receiveCopy, msgLength, HAL_MAX_DELAY);
+				//HAL_UART_Transmit(&huart2, receiveCopy, msgLength, HAL_MAX_DELAY);
+				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 0);
 			}
 
 			receive--;
