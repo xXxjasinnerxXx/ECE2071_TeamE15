@@ -119,15 +119,19 @@ int main(void)
 		if (channel == 1)
 
 		{
-			uint8_t currentChar = 0;
+			uint8_t* currentChar = (uint8_t*)malloc(255 * sizeof(uint8_t));
+			currentChar[0] = 'a';
 			uint8_t msgLength = 0;
 
-			for (int i = 0; currentChar != '\0'; i++)
+			for (int i = 0; currentChar[0] != '\0'; i++)
 			{
-				HAL_UART_Receive(&huart1, (uint8_t*)currentChar, 1, HAL_MAX_DELAY);
-				receive[i] = currentChar;
+				HAL_UART_Receive(&huart1, currentChar, 1, HAL_MAX_DELAY);
+				receive[i] = currentChar[0];
 				msgLength = i + 1;
 			}
+
+			free(currentChar);
+
 
 			HAL_Delay(250);
 			channel = 2;
@@ -145,7 +149,7 @@ int main(void)
 
 				uint8_t stmsAdded = receiveCopy[0] - 48; // Get the number from the character
 				receiveCopy[0] = (stmsAdded + 1) + 48;
-				receiveCopy[4 + stmsAdded] = id + 65;
+				receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
 
 				//HAL_UART_Transmit(&huart1, receiveCopy, msgLength, HAL_MAX_DELAY);
 				HAL_UART_Transmit(&huart2, receiveCopy, msgLength, HAL_MAX_DELAY);
@@ -173,7 +177,7 @@ int main(void)
 
 			  HAL_Delay(250);
 
-			  //channel = 1;
+			  channel = 1;
 			  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 
 			  memcpy(receiveCopy, receive, msgLength);
@@ -181,18 +185,16 @@ int main(void)
 
 			  receive[3] = '\0';
 
-			  HAL_UART_Transmit(&huart2, receiveCopy, msgLength, HAL_MAX_DELAY);
-
 			  if (strcmp((char *)receive, "E15") == 0)
 			  {
 			  	// Checksum valid
 
 			  	uint8_t stmsAdded = receiveCopy[0] - 48; // Get the number from the character
 			  	receiveCopy[0] = (stmsAdded + 1) + 48;
-			  	receiveCopy[4 + stmsAdded] = id + 65;
+			  	receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
 
 			  	HAL_UART_Transmit(&huart1, receiveCopy, msgLength, HAL_MAX_DELAY);
-			  	HAL_UART_Transmit(&huart2, receiveCopy, msgLength, HAL_MAX_DELAY);
+			  	//HAL_UART_Transmit(&huart2, receiveCopy, msgLength, HAL_MAX_DELAY);
 			  }
 
 			  receive--;
