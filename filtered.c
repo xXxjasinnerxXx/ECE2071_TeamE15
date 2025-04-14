@@ -1,4 +1,4 @@
-  /* USER CODE BEGIN Header */
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -159,6 +159,7 @@ int main(void)
 		  if (channel == 2)
 		  {
 			  uint8_t* currentChar = (uint8_t*)malloc(255 * sizeof(uint8_t));
+			  currentChar[0] = 'a';
 			  uint8_t msgLength = 0;
 
 			  for (int i = 0; currentChar[0] != '\0'; i++)
