@@ -134,7 +134,6 @@ int main(void)
 			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 1);
 
 			HAL_Delay(250);
-			//channel = 2;
 
 			memcpy(receiveCopy, receive, msgLength);
 
@@ -148,7 +147,6 @@ int main(void)
 
 				uint8_t stmsAdded = receiveCopy[0] - 48; // Get the number from the character
 				receiveCopy[0] = (stmsAdded + 1) + 48;
-				//receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
 				uint8_t* deviceId = (uint8_t*)malloc(8*sizeof(uint8_t));
 				sprintf((char*)deviceId, "E15_%d\r\n", id);
 
@@ -158,7 +156,6 @@ int main(void)
 				free(deviceId);
 
 				HAL_UART_Transmit(&huart1, receiveCopy, strlen((char*)receiveCopy) + 1, HAL_MAX_DELAY);
-				//HAL_UART_Transmit(&huart2, receiveCopy, strlen((char*)receiveCopy) + 1, HAL_MAX_DELAY);
 				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 0);
 			}
 
@@ -169,58 +166,6 @@ int main(void)
 		memset(receive, 0, sizeof(receive));
 		memset(receiveCopy, 0, sizeof(receiveCopy));
 
-		  if (channel == 2)
-		  {
-			  uint8_t* currentChar = (uint8_t*)malloc(255 * sizeof(uint8_t));
-			  currentChar[0] = 'a';
-			  uint8_t msgLength = 0;
-
-			  for (int i = 0; currentChar[0] != '\0'; i++)
-			  {
-				  HAL_UART_Receive(&huart2, currentChar, 1, HAL_MAX_DELAY);
-				  receive[i] = currentChar[0];
-				  msgLength = i + 1;
-			  }
-
-			  free(currentChar);
-
-			  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 1);
-
-			  HAL_Delay(250);
-
-			  channel = 1;
-
-			  memcpy(receiveCopy, receive, msgLength);
-			  receive++; // Inc the address to remove the first character
-
-			  receive[3] = '\0';
-
-			  if (strcmp((char *)receive, "E15") == 0)
-			  {
-			  	// Checksum valid
-
-			  	uint8_t stmsAdded = receiveCopy[0] - 48; // Get the number from the character
-			  	receiveCopy[0] = (stmsAdded + 1) + 48;
-			  	//receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
-
-			  	uint8_t* deviceId = (uint8_t*)malloc(8*sizeof(uint8_t));
-			  	sprintf((char*)deviceId, "E15_%d\r\n", id);
-
-			  	receiveCopy[msgLength - 3] = '\0';
-			  	strcat((char*)receiveCopy, (char*)deviceId);
-
-
-			  	HAL_UART_Transmit(&huart1, receiveCopy, strlen((char*)receiveCopy) + 1, HAL_MAX_DELAY);
-			  	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 0);
-			  	//HAL_UART_Transmit(&huart2, receiveCopy, strlen((char*)receiveCopy) + 1, HAL_MAX_DELAY);
-
-			  	free(deviceId);
-
-			  }
-
-			  receive--;
-
-		  }
 		  free(receive);
 		  free(receiveCopy);
 
