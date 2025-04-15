@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,23 +100,21 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
-#define ID 0
+  uint8_t id = 0;
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint8_t* receive = (uint8_t*)malloc(255 * sizeof(uint8_t)); // Max of 255 chars
-  uint8_t* receiveCopy = (uint8_t*)malloc(255 * sizeof(uint8_t));
+  uint8_t channel = 2;
 
-  uint8_t channel = 1;
-
-  uint32_t rawID = HAL_GetUIDw0();
-  uint8_t id = rawID & 8; // Get the 4 bits (hence it never goes over 10)
 
   while (1)
   {
+	  uint8_t* receive = (uint8_t*)malloc(255 * sizeof(uint8_t)); // Max of 255 chars
+	  uint8_t* receiveCopy = (uint8_t*)malloc(255 * sizeof(uint8_t));
+
 		if (channel == 1)
 
 		{
@@ -135,7 +134,7 @@ int main(void)
 			HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 1);
 
 			HAL_Delay(250);
-			//channel = 2;
+			channel = 2;
 
 			memcpy(receiveCopy, receive, msgLength);
 
@@ -149,10 +148,17 @@ int main(void)
 
 				uint8_t stmsAdded = receiveCopy[0] - 48; // Get the number from the character
 				receiveCopy[0] = (stmsAdded + 1) + 48;
-				receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
+				//receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
+				uint8_t* deviceId = (uint8_t*)malloc(8*sizeof(uint8_t));
+				sprintf((char*)deviceId, "E15_%d\r\n", id);
 
-				HAL_UART_Transmit(&huart1, receiveCopy, msgLength, HAL_MAX_DELAY);
-				//HAL_UART_Transmit(&huart2, receiveCopy, msgLength, HAL_MAX_DELAY);
+				receiveCopy[msgLength - 3] = '\0';
+				strcat((char*)receiveCopy, (char*)deviceId);
+
+				free(deviceId);
+
+				//HAL_UART_Transmit(&huart1, receiveCopy, strlen((char*)receiveCopy) + 1, HAL_MAX_DELAY);
+				HAL_UART_Transmit(&huart2, receiveCopy, strlen((char*)receiveCopy) + 1, HAL_MAX_DELAY);
 				HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 0);
 			}
 
@@ -160,6 +166,8 @@ int main(void)
 
 		}
 
+		memset(receive, 0, sizeof(receive));
+		memset(receiveCopy, 0, sizeof(receiveCopy));
 
 		  if (channel == 2)
 		  {
@@ -176,10 +184,11 @@ int main(void)
 
 			  free(currentChar);
 
+			  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 1);
+
 			  HAL_Delay(250);
 
 			  channel = 1;
-			  HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 
 			  memcpy(receiveCopy, receive, msgLength);
 			  receive++; // Inc the address to remove the first character
@@ -192,23 +201,34 @@ int main(void)
 
 			  	uint8_t stmsAdded = receiveCopy[0] - 48; // Get the number from the character
 			  	receiveCopy[0] = (stmsAdded + 1) + 48;
-			  	receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
+			  	//receiveCopy[msgLength - 10 + stmsAdded] = id + 65;
 
-			  	HAL_UART_Transmit(&huart1, receiveCopy, msgLength, HAL_MAX_DELAY);
-			  	//HAL_UART_Transmit(&huart2, receiveCopy, msgLength, HAL_MAX_DELAY);
+			  	uint8_t* deviceId = (uint8_t*)malloc(8*sizeof(uint8_t));
+			  	sprintf((char*)deviceId, "E15_%d\r\n", id);
+
+			  	receiveCopy[msgLength - 3] = '\0';
+			  	strcat((char*)receiveCopy, (char*)deviceId);
+
+
+			  	HAL_UART_Transmit(&huart1, receiveCopy, strlen((char*)receiveCopy) + 1, HAL_MAX_DELAY);
+			  	HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, 0);
+			  	//HAL_UART_Transmit(&huart2, receiveCopy, strlen((char*)receiveCopy) + 1, HAL_MAX_DELAY);
+
+			  	free(deviceId);
+
 			  }
 
 			  receive--;
 
 		  }
+		  free(receive);
+		  free(receiveCopy);
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
     }
 
-  free(receive);
-  free(receiveCopy);
   /* USER CODE END 3 */
 }
 
