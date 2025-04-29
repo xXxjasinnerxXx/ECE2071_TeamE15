@@ -7,6 +7,9 @@ import serial.tools.list_ports
 BAUD_RATE = 115200
 SAMPLE_RATE = 10000
 
+
+
+
 # Select the first com port
 ports = serial.tools.list_ports.comports()
 device = None
