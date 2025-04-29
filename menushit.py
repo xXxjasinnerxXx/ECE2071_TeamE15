@@ -11,8 +11,43 @@ def manual_trigger():
     print("You are in Manual trigger mode: Press ctrl + C for menu\n")
     
     try:
+        # Select the first com port
+        ports = serial.tools.list_ports.comports()
+        device = None
+        for i in ports:
+            if i.description[0:3] == "STM":
+                device = i
+
+        print(f"STM Serial Port = {device.device}")
+
+        ser = serial.Serial(device.device, BAUD_RATE)
+
+        data = []
         while True:
-            pass
+            try:
+                snippetLength = int(input("Enter length of snippet in seconds: "))
+                break
+            except ValueError:
+                print("Invalid value, try again")
+                continue
+                
+        for i in range(SAMPLE_RATE*snippetLength):
+            ch = ser.read(1)
+            data.append(int.from_bytes(ch))
+
+
+        data = np.array(data)
+
+        data = (data - data.min()) / data.max()
+        data = data * 255
+
+        data = data.astype(np.uint8)
+
+        with wave.open("output.wav", 'wb') as wave_file:    
+            wave_file.setnchannels(1)
+            wave_file.setsampwidth(1)
+            wave_file.setframerate(SAMPLE_RATE)
+            wave_file.writeframes(data.tobytes())
         
     except KeyboardInterrupt:
         menu()
@@ -51,36 +86,7 @@ def menu():
 
 
 
-# # Select the first com port
-# ports = serial.tools.list_ports.comports()
-# device = None
-# for i in ports:
-#     if i.description[0:3] == "STM":
-#         device = i
 
-# print(f"STM Serial Port = {device.device}")
-
-# ser = serial.Serial(device.device, BAUD_RATE)
-
-# data = []
-
-# for i in range(SAMPLE_RATE*5):
-#     ch = ser.read(1)
-#     data.append(int.from_bytes(ch))
-
-
-# data = np.array(data)
-
-# data = (data - data.min()) / data.max()
-# data = data * 255
-
-# data = data.astype(np.uint8)
-
-# with wave.open("output.wav", 'wb') as wave_file:    
-#     wave_file.setnchannels(1)
-#     wave_file.setsampwidth(1)
-#     wave_file.setframerate(SAMPLE_RATE)
-#     wave_file.writeframes(data.tobytes())
 
 
 if __name__ == '__main__':
