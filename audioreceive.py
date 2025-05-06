@@ -21,12 +21,6 @@ print(f"STM Serial Port = {device.device}")
 
 ser = serial.Serial(device.device, BAUD_RATE)
 
-ser.write(MANUAL_MODE)
-ser.write(bytes(chr(0), 'utf-8'))
-
-
-
-exit()
 
 data = []
 

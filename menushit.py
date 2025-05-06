@@ -9,21 +9,31 @@ import csv
 
 BAUD_RATE = 115200
 SAMPLE_RATE = 10000
+
+MANUAL_MODE = bytes(chr(0x8F), 'utf-8')
+DISTANCE_MODE = bytes(chr(0x90), 'utf-8')
+
+# Select the first com port
+ports = serial.tools.list_ports.comports()
+device = None
+for i in ports:
+    if i.description[0:3] == "STM":
+        device = i
+
+print(f"STM Serial Port = {device.device}\n")
+
+ser = serial.Serial(device.device, BAUD_RATE)
+
 data = []
 def manual_trigger(data = None):
+    
+    global ser
+
     print("You are in Manual trigger mode: Press ctrl + C for menu\n")
     
     try:
-        # Select the first com port
-        ports = serial.tools.list_ports.comports()
-        device = None
-        for i in ports:
-            if i.description[0:3] == "STM":
-                device = i
-
-        print(f"STM Serial Port = {device.device}")
-
-        ser = serial.Serial(device.device, BAUD_RATE)
+        ser.write(MANUAL_MODE)
+        ser.write(bytes(chr(0), 'utf-8'))
 
         data = []
         while True:
@@ -56,7 +66,25 @@ def manual_trigger(data = None):
         return None
     
 def distance_trigger():
+
+    global ser
+
     print("You are in Distance Trigger Mode: Press ctrl + C for menu\n")
+
+    while True:
+        try:
+            distance = int(input("Enter the target distance (between 5 and 30): "))
+            if (5 <= distance <= 30):
+                break
+            else:
+                print("Distance must be between 5 and 30")
+
+        except ValueError:
+            print("Enter a valid distance")
+
+    ser.write(DISTANCE_MODE)
+    ser.write(bytes(chr(distance), 'utf-8'))
+
     try:
         while True:
             pass 
@@ -71,15 +99,32 @@ def menu():
     data = None
     try:    
         while True:
-            decision = input("\nYou are in the menu:\nPlease choose a mode by entering a number:\nManual triggering: 1\nDistance Trigger Mode: 2\nData Anlysis: 3\nOr enter ctrl + C to exit.\n")
+
+            print("""
+
+███████╗████████╗███╗   ███╗    ███████╗ ██████╗ ██╗   ██╗███╗   ██╗██████╗ ███████╗
+██╔════╝╚══██╔══╝████╗ ████║    ██╔════╝██╔═══██╗██║   ██║████╗  ██║██╔══██╗██╔════╝
+███████╗   ██║   ██╔████╔██║    ███████╗██║   ██║██║   ██║██╔██╗ ██║██║  ██║███████╗
+╚════██║   ██║   ██║╚██╔╝██║    ╚════██║██║   ██║██║   ██║██║╚██╗██║██║  ██║╚════██║
+███████║   ██║   ██║ ╚═╝ ██║    ███████║╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝███████║
+╚══════╝   ╚═╝   ╚═╝     ╚═╝    ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚══════╝
+                                                                                    
+1 > Manual Triggering Mode
+2 > Distance Triggering Mode 
+3 > Data Analysis Mode
+99 > Exit Program (Ctrl + C)              
+""")
+
+            decision = input("Enter a mode: ")
             if decision == "1":
                 data = manual_trigger()
             elif decision == "2":
                 data = distance_trigger()
-            elif decision == "0":
-                exit()
             elif decision == "3":
                 output_type(data)
+            elif decision == "99":
+                print("Thank you for using STM SOUNDS")
+                exit()
             else:
                 print("invalid input, try again\n")
                 continue
