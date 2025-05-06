@@ -65,7 +65,7 @@ static void MX_TIM16_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint8_t rxBuffer[12] = {0};
+uint8_t rxBuffer[1] = {0};
 uint8_t rxBuffer2[3] = {0};
 
 uint8_t operatingMode = 1; // 1 = manual triggering, 2 = distance triggering
