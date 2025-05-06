@@ -36,7 +36,7 @@ def manual_trigger(data = None):
                 
         for i in range(SAMPLE_RATE*snippetLength):
             ch = ser.read(1)
-            data.append(int.from_bytes(ch,byteorder="little",signed=True))
+            data.append(int.from_bytes(ch,byteorder="big",signed=True))
 
         # data = np.array(data, dtype=np.uint16)
         
