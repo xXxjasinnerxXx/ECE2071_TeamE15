@@ -105,6 +105,8 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   uint16_t data [1] ;
+  uint16_t prev_value = 0;
+  uint16_t averaged_value = 0;
   while (1)
   {
 	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
@@ -112,7 +114,9 @@ int main(void)
 //	  uint16_t* sampledValue = (uint16_t*)malloc(255 * sizeof(uint16_t));
 	  data[0] = HAL_ADC_GetValue(&hadc1);
 	  //HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
-	  HAL_UART_Transmit(&huart1, (uint8_t *)data, 2, HAL_MAX_DELAY);
+	  averaged_value = (prev_value+data[0])/2;
+	  prev_value = data[0];
+	  HAL_UART_Transmit(&huart2, (uint8_t *)&averaged_value, 2, HAL_MAX_DELAY);
 	  HAL_ADC_Start(&hadc1);
 	  //HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 

@@ -25,7 +25,7 @@ data = []
 
 for i in range(SAMPLE_RATE*5):
     ch = ser.read(1)
-    data.append(int.from_bytes(ch))
+    data.append(int.from_bytes(ch,byteorder="big"))
 
 
 data = np.array(data)
