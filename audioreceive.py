@@ -7,8 +7,8 @@ import serial.tools.list_ports
 BAUD_RATE = 115200
 SAMPLE_RATE = 10000
 
-
-
+MANUAL_MODE = bytes(chr(0x8F), 'utf-8')
+DISTANCE_MODE = bytes(chr(0x90), 'utf-8')
 
 # Select the first com port
 ports = serial.tools.list_ports.comports()
@@ -20,6 +20,13 @@ for i in ports:
 print(f"STM Serial Port = {device.device}")
 
 ser = serial.Serial(device.device, BAUD_RATE)
+
+ser.write(MANUAL_MODE)
+ser.write(bytes(chr(0), 'utf-8'))
+
+
+
+exit()
 
 data = []
 
