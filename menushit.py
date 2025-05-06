@@ -34,9 +34,14 @@ def manual_trigger(data = None):
                 print("Invalid value, try again")
                 continue
                 
-        for i in range(SAMPLE_RATE*snippetLength):
-            ch = ser.read(1)
-            data.append(int.from_bytes(ch,byteorder="big",signed=True))
+        # for i in range(SAMPLE_RATE*snippetLength):
+        #     ch = ser.read(1)
+        #     data.append(int.from_bytes(ch,byteorder="big",signed=False))
+
+        for i in range(SAMPLE_RATE * snippetLength):
+            raw = ser.read(2)
+            val = int.from_bytes(raw, byteorder="big", signed=False)  # STM32 uses little-endian by default
+            data.append(val)
 
         # data = np.array(data, dtype=np.uint16)
         
@@ -93,7 +98,7 @@ def output_type(data):
                 with wave.open("output.wav", 'wb') as wave_file:    
                     wave_file.setnchannels(1)
                     wave_file.setsampwidth(1)
-                    wave_file.setframerate(SAMPLE_RATE)
+                    wave_file.setframerate(SAMPLE_RATE/2)
                     wave_file.writeframes(data.tobytes())
                     return
             elif outputChoice == "csv":
@@ -114,6 +119,7 @@ def output_type(data):
                 plt.title("Audio Waveform")
                 plt.xlabel("Sample")
                 plt.ylabel("Amplitude")
+                # plt.ylim(0,65535)
                 plt.tight_layout()
                 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
                 file_path = os.path.join(desktop_path, "output.png")
