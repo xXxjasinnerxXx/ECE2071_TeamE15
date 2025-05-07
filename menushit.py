@@ -48,9 +48,11 @@ def manual_trigger(data = None):
         #     ch = ser.read(1)
         #     data.append(int.from_bytes(ch,byteorder="big",signed=False))
 
-        for i in range(SAMPLE_RATE * snippetLength):
-            raw = ser.read(1)
-            val = int.from_bytes(raw, byteorder="big", signed=False)  # STM32 uses little-endian by default
+        for _ in range(SAMPLE_RATE * snippetLength):
+            raw = ser.read(2)
+
+            val = int.from_bytes(raw, byteorder="little", signed=False)  # STM32 uses little-endian by default
+            val &= 0x0FFF
 
             data.append(val)
 
@@ -144,7 +146,7 @@ def output_type(data):
                 with wave.open("output.wav", 'wb') as wave_file:    
                     wave_file.setnchannels(1)
                     wave_file.setsampwidth(1)
-                    wave_file.setframerate(SAMPLE_RATE/2)
+                    wave_file.setframerate(SAMPLE_RATE/4)
                     wave_file.writeframes(data.tobytes())
                     return
             elif outputChoice == "csv":

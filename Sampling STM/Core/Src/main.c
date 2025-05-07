@@ -72,20 +72,21 @@ static void MX_SPI1_Init(void);
 /* USER CODE BEGIN 0 */
 
 uint16_t data;
-uint16_t prev_value[3] = {0};
+uint16_t prev_value[7] = {0};
 uint16_t averaged_value = 0;
+
+uint8_t sendSample[2] = {0};
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
 	data = HAL_ADC_GetValue(&hadc1);
 
-	averaged_value = (prev_value[0] + prev_value[1] + prev_value[2] +data)/4;
-	prev_value[2] = prev_value[1];
-	prev_value[1] = prev_value[0];
+	averaged_value = (prev_value[0] +data)/2;
 	prev_value[0] = data;
 
-	uint8_t sendSample = (uint8_t) averaged_value;
-	HAL_SPI_Transmit(&hspi1, &sendSample, sizeof(sendSample), HAL_MAX_DELAY);
+	sendSample[0] = (averaged_value >> 8) & 0x0F;
+	sendSample[1] = averaged_value & 0xFF;
+	HAL_SPI_Transmit(&hspi1, sendSample, 2, HAL_MAX_DELAY);
 }
 
 
@@ -244,7 +245,7 @@ static void MX_ADC1_Init(void)
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
-  hadc1.Init.Resolution = ADC_RESOLUTION_8B;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;

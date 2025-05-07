@@ -68,8 +68,10 @@ static void MX_SPI1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-uint8_t rxBuffer[1] = {0};
+uint8_t rxBuffer[2] = {0};
 uint8_t rxBuffer2[3] = {0};
+
+uint16_t sample;
 
 uint8_t operatingMode = 1; // 1 = manual triggering, 2 = distance triggering
 
@@ -114,9 +116,9 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
 {
-	HAL_UART_Transmit_IT(&huart2, rxBuffer, 1);
+	HAL_UART_Transmit_IT(&huart2, rxBuffer, 2);
 	//HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
-	HAL_SPI_Receive_IT(&hspi1, rxBuffer, 1);
+	HAL_SPI_Receive_IT(&hspi1, rxBuffer, 2);
 }
 
 /* USER CODE END 0 */
