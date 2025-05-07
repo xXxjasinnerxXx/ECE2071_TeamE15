@@ -43,6 +43,9 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
 
+SPI_HandleTypeDef hspi1;
+DMA_HandleTypeDef hdma_spi1_tx;
+
 TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart1;
@@ -55,16 +58,37 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+uint16_t data;
+uint16_t prev_value[3] = {0};
+uint16_t averaged_value = 0;
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+	data = HAL_ADC_GetValue(&hadc1);
+
+	averaged_value = (prev_value[0] + prev_value[1] + prev_value[2] +data)/4;
+	prev_value[2] = prev_value[1];
+	prev_value[1] = prev_value[0];
+	prev_value[0] = data;
+
+	uint8_t sendSample = (uint8_t) averaged_value;
+	HAL_SPI_Transmit(&hspi1, &sendSample, sizeof(sendSample), HAL_MAX_DELAY);
+}
+
+
 
 /* USER CODE END 0 */
 
@@ -97,31 +121,37 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   MX_TIM1_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_ADC_Start(&hadc1);
+  HAL_ADC_Start_IT(&hadc1);
+  HAL_TIM_Base_Start(&htim1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint16_t data [1] ;
-  uint16_t prev_value = 0;
-  uint16_t averaged_value = 0;
+
   while (1)
   {
-	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+	  //HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 
 //	  uint16_t* sampledValue = (uint16_t*)malloc(255 * sizeof(uint16_t));
-	  data[0] = HAL_ADC_GetValue(&hadc1);
+	  /*data[0] = HAL_ADC_GetValue(&hadc1);
 	  //HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,1);
-	  averaged_value = (prev_value+data[0])/2;
-	  prev_value = data[0];
-	  HAL_UART_Transmit(&huart2, (uint8_t *)&averaged_value, 2, HAL_MAX_DELAY);
-	  HAL_ADC_Start(&hadc1);
+	  averaged_value = (prev_value[0] + prev_value[1] + prev_value[2] +data[0])/4;
+	  prev_value[2] = prev_value[1];
+	  prev_value[1] = prev_value[0];
+	  prev_value[0] = data[0];
+	  HAL_SPI_Transmit(&hspi1, (uint8_t *)&averaged_value, 1, HAL_MAX_DELAY);
+	  //HAL_SPI_Transmit(&hspi1, (uint8_t*)data[0], 2, HAL_MAX_DELAY);
+
+	  HAL_ADC_Start(&hadc1);*/
+
 	  //HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin,0);
 
 	  //HAL_ADC_Start(&hadc1);
@@ -214,7 +244,7 @@ static void MX_ADC1_Init(void)
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
-  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.Resolution = ADC_RESOLUTION_8B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
@@ -222,8 +252,8 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T1_TRGO;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.OversamplingMode = DISABLE;
@@ -251,6 +281,46 @@ static void MX_ADC1_Init(void)
 }
 
 /**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
   * @brief TIM1 Initialization Function
   * @param None
   * @retval None
@@ -269,9 +339,9 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
+  htim1.Init.Prescaler = 31;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
+  htim1.Init.Period = 23;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -368,6 +438,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -395,7 +481,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-
+  GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 

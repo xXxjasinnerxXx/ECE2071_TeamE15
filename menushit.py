@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import os
 import csv
 
-BAUD_RATE = 115200
-SAMPLE_RATE = 10000
+BAUD_RATE = 921600
+SAMPLE_RATE = 44100
 
 MANUAL_MODE = bytes(chr(0x8F), 'utf-8')
 DISTANCE_MODE = bytes(chr(0x90), 'utf-8')
@@ -49,8 +49,9 @@ def manual_trigger(data = None):
         #     data.append(int.from_bytes(ch,byteorder="big",signed=False))
 
         for i in range(SAMPLE_RATE * snippetLength):
-            raw = ser.read(2)
+            raw = ser.read(1)
             val = int.from_bytes(raw, byteorder="big", signed=False)  # STM32 uses little-endian by default
+
             data.append(val)
 
         # data = np.array(data, dtype=np.uint16)

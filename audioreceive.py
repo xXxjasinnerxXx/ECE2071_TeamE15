@@ -26,6 +26,7 @@ data = []
 
 for i in range(SAMPLE_RATE*5):
     ch = ser.read(1)
+    print(ch)
     data.append(int.from_bytes(ch,byteorder="big"))
 
 
