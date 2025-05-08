@@ -51,18 +51,18 @@ def manual_trigger(data = None):
         for _ in range(SAMPLE_RATE * snippetLength):
             raw = ser.read(2)
 
-            val = int.from_bytes(raw, byteorder="little", signed=False)  # STM32 uses little-endian by default
+            val = int.from_bytes(raw, byteorder="big", signed=False)  # STM32 uses little-endian by default
             val &= 0x0FFF
 
             data.append(val)
 
-        # data = np.array(data, dtype=np.uint16)
+        data = np.array(data, dtype=np.uint16)
         
-        data = np.array(data)
-        data = (data - data.min()) / data.max()
-        data = data * 255
+        #data = np.array(data)
+        #data = (data - data.min()) / data.max()
+        #data = data * 255 
 
-        data = data.astype(np.uint8)
+        #data = data.astype(np.uint8)
         return data
         
     except KeyboardInterrupt:
@@ -143,9 +143,14 @@ def output_type(data):
     while True: 
             outputChoice = input("Enter output type:\nwav, png or csv: ")
             if outputChoice == "wav":
+
+                data = data.astype(np.int16)
+                data = ((data - 2048) / 2047.0) * 32767  # center and scale
+                data = np.clip(data, -32768, 32767).astype(np.int16)
+
                 with wave.open("output.wav", 'wb') as wave_file:    
                     wave_file.setnchannels(1)
-                    wave_file.setsampwidth(1)
+                    wave_file.setsampwidth(2)
                     wave_file.setframerate(SAMPLE_RATE/4)
                     wave_file.writeframes(data.tobytes())
                     return

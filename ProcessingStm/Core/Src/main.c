@@ -158,10 +158,9 @@ int main(void)
   MX_TIM16_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  MX_TIM16_Init();
 
   //HAL_UART_Receive_IT (&huart1, rxBuffer, 1);
-  HAL_SPI_Receive_IT(&hspi1, rxBuffer, 1);
+  HAL_SPI_Receive_IT(&hspi1, rxBuffer, 2);
   HAL_UART_Receive_IT (&huart2, rxBuffer2, 3);
 
 
