@@ -6,6 +6,7 @@ import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import os
 import csv
+import time
 
 BAUD_RATE = 921600
 SAMPLE_RATE = 44100
@@ -23,6 +24,7 @@ for i in ports:
 print(f"STM Serial Port = {device.device}\n")
 
 ser = serial.Serial(device.device, BAUD_RATE)
+
 
 data = []
 def manual_trigger(data = None):
@@ -48,13 +50,17 @@ def manual_trigger(data = None):
         #     ch = ser.read(1)
         #     data.append(int.from_bytes(ch,byteorder="big",signed=False))
 
+        ser.flush()
+        ser.reset_input_buffer()
+
         for _ in range(SAMPLE_RATE * snippetLength):
             raw = ser.read(2)
 
-            val = int.from_bytes(raw, byteorder="big", signed=False)  # STM32 uses little-endian by default
-            val &= 0x0FFF
+            data.append(raw)    
 
-            data.append(val)
+        for i in range(len(data)):
+            data[i] = int.from_bytes(data[i], byteorder="little", signed=False)  # STM32 uses little-endian by default
+            data[i] &= 0x0FFF        
 
         data = np.array(data, dtype=np.uint16)
         
@@ -88,12 +94,48 @@ def distance_trigger():
     ser.write(DISTANCE_MODE)
     ser.write(bytes(chr(distance), 'utf-8'))
 
+
+    data = []
+    zeroCount = 0
+
+    startTime = time.time()
+
+    print("Started Recording...")
     try:
         while True:
-            pass 
+            raw = ser.read(2)
+            
+            if raw == b'\x00\x00':
+                zeroCount += 1
+            
+            else:
+                data.append(raw)
+
+            if zeroCount > 5000:
+                zeroCount = 0
+                print("Stopped recording...")
+                startTime = time.time()
+                while ser.read(2) == b'\x00\x00':
+                    if time.time() - startTime >= 10: # 10 seconds
+                        print("Stopped recording due to 10 second timeout")
+                        raise TimeoutError
+
+                print("Started Recording...")
+                startTime = time.time()
+
+    except TimeoutError:
+        pass
 
     except KeyboardInterrupt:
-        return None
+        print("Stopped recording due to keyboard interrupt")
+
+    for i in range(len(data)):
+        data[i] = int.from_bytes(data[i], byteorder="little", signed=False)  # STM32 uses little-endian by default
+        data[i] &= 0x0FFF        
+
+    data = np.array(data, dtype=np.uint16)
+
+    return data
     
 def menu():
     """
@@ -155,15 +197,13 @@ def output_type(data):
                     wave_file.writeframes(data.tobytes())
                     return
             elif outputChoice == "csv":
-                desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-                file_path = os.path.join(desktop_path, "output.csv")
 
-                with open(file_path, mode='w', newline='') as file:
+                with open("output.csv", mode='w', newline='') as file:
                     writer = csv.writer(file)
                     for value in data:
                         writer.writerow([value])
 
-                print(f"CSV file saved to {file_path}")
+                print(f"CSV file saved to output.csv")
                 return
             
             elif outputChoice == "png":
@@ -174,11 +214,9 @@ def output_type(data):
                 plt.ylabel("Amplitude")
                 # plt.ylim(0,65535)
                 plt.tight_layout()
-                desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-                file_path = os.path.join(desktop_path, "output.png")
-                plt.savefig(file_path)
+                plt.savefig("output.png")
                 plt.close()
-                print(f"PNG file saved to {file_path}")
+                print(f"PNG file saved to output.png")
                 return
 
             else:

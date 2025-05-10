@@ -81,11 +81,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
 	data = HAL_ADC_GetValue(&hadc1);
 
-	averaged_value = (prev_value[0] + data)/2;
-	prev_value[0] = data;
-
-	sendSample[0] = (averaged_value >> 8) & 0xFF;
-	sendSample[1] = averaged_value & 0xFF;
+	sendSample[0] = (data >> 8) & 0xFF;
+	sendSample[1] = data & 0xFF;
 	HAL_SPI_Transmit(&hspi1, sendSample, 2, HAL_MAX_DELAY);
 }
 
@@ -304,7 +301,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
