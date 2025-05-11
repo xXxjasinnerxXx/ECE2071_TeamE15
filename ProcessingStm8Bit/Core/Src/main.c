@@ -119,7 +119,7 @@ uint8_t uartReady = 1;
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-	//Debug_GPIO_Port->ODR ^= Debug_Pin;
+	Debug_GPIO_Port->ODR ^= Debug_Pin;
 
 	//HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 	/*sendBuffer = (prevBuffer[0] + prevBuffer[1] + prevBuffer[2] + rxBuffer[0])/4; // average last four samples
@@ -136,6 +136,11 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
 {
+
+	if (rxBuffer[0] < 100 || rxBuffer[0] > 3000)
+	{
+		return;
+	}
 
 	if (operatingMode == 2)
 	{

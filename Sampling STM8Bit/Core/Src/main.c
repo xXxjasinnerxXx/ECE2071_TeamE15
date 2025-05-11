@@ -71,6 +71,11 @@ static void MX_SPI1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+
+uint8_t adcBuffer[256];  // Buffer for ADC samples
+uint16_t bufferIndex = 0;  // Index for the buffer
+
+
 uint8_t data;
 uint16_t prev_value[3] = {0};
 uint16_t averaged_value = 0;
@@ -82,22 +87,32 @@ uint8_t spiReady = 1;
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	spiReady = 1;
+	bufferIndex = 0;
+	Debug_GPIO_Port->ODR ^= Debug_Pin;
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-	if (spiReady)
-	{
-		data = (uint8_t)HAL_ADC_GetValue(&hadc1);
-
-		if (data < 100 || data > 3000)
-		{
-			return;
-		}
+	//if (spiReady)
+	//{
+		/*data = (uint8_t)HAL_ADC_GetValue(&hadc1);
 
 		spiReady = 0;
-		HAL_SPI_Transmit_IT(&hspi1, &data, 1);
-	}
+		HAL_SPI_Transmit_IT(&hspi1, &data, 1);*/
+
+		// Store ADC value in buffer
+		        adcBuffer[bufferIndex] = (uint8_t)HAL_ADC_GetValue(&hadc1);
+		        bufferIndex++;
+
+		        // When the buffer is full, start SPI DMA transmission
+		        if (bufferIndex >= 256 && spiReady)  // Buffer is full
+		        {
+		            bufferIndex = 0;  // Reset buffer index for the next batch
+		            spiReady = 0;  // Prevent further ADC conversions until the current transmission is complete
+
+		            HAL_SPI_Transmit_DMA(&hspi1, adcBuffer, 256);  // Start DMA transmission
+		        }
+	//}
 }
 
 
@@ -316,7 +331,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -484,14 +499,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, Debug_Pin|LD3_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : LD3_Pin */
-  GPIO_InitStruct.Pin = LD3_Pin;
+  /*Configure GPIO pins : Debug_Pin LD3_Pin */
+  GPIO_InitStruct.Pin = Debug_Pin|LD3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
   GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
