@@ -137,10 +137,11 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
 {
 	Debug_GPIO_Port->ODR ^= Debug_Pin;
 
-	/*if (rxBuffer[0] < 100 || rxBuffer[0] > 3000)
+	if (rxBuffer[0] < 100 || rxBuffer[0] > 3000)
 	{
+		HAL_SPI_Receive_IT(&hspi1, rxBuffer, 1);
 		return;
-	}*/
+	}
 
 	if (operatingMode == 2 && uartReady)
 	{
