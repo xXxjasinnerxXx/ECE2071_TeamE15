@@ -119,7 +119,6 @@ uint8_t uartReady = 1;
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
-	Debug_GPIO_Port->ODR ^= Debug_Pin;
 
 	//HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 	/*sendBuffer = (prevBuffer[0] + prevBuffer[1] + prevBuffer[2] + rxBuffer[0])/4; // average last four samples
@@ -136,13 +135,14 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
 {
+	Debug_GPIO_Port->ODR ^= Debug_Pin;
 
-	if (rxBuffer[0] < 100 || rxBuffer[0] > 3000)
+	/*if (rxBuffer[0] < 100 || rxBuffer[0] > 3000)
 	{
 		return;
-	}
+	}*/
 
-	if (operatingMode == 2)
+	if (operatingMode == 2 && uartReady)
 	{
 		//sendBuffer[0] = rxBuffer[0] * distanceSend;
 		//sendBuffer[1] = rxBuffer[1] * distanceSend;
@@ -152,9 +152,9 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
 	}
 
 	else
-	{if (uartReady) {	uartReady = 0;
- HAL_UART_Transmit_IT(&huart2, &sendBuffer, 1);}}
-
+	{
+		HAL_UART_Transmit_IT(&huart2, &sendBuffer, 1);
+	}
 	//HAL_GPIO_TogglePin(LD3_GPIO_Port,LD3_Pin);
 	HAL_SPI_Receive_IT(&hspi1, rxBuffer, 1);
 }
@@ -289,7 +289,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 16;
+  RCC_OscInitStruct.PLL.PLLN = 32;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -307,7 +307,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }

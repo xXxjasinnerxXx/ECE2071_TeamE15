@@ -9,8 +9,7 @@ import csv
 import time
 
 BAUD_RATE = 921600
-#SAMPLE_RATE = 44100
-SAMPLE_RATE = 32000
+SAMPLE_RATE = 44100
 
 MANUAL_MODE = bytes(chr(0x8F), 'utf-8')
 DISTANCE_MODE = bytes(chr(0x90), 'utf-8')
@@ -167,20 +166,14 @@ def output_type(data):
     if len(data) == 0:
         print("no data")
         return None
-    data = np.array(data)
     while True: 
+            data = np.array([int.from_bytes(byte, byteorder="big", signed=False) for byte in data])
+            data = (data - data.min()) / data.max()
+            data = data * 255
+            data = data.astype(np.uint8)
+
             outputChoice = input("Enter output type:\nwav, png or csv: ")
             if outputChoice == "wav":
-
-                #for i in range(len(data)):
-                #    data[i] = int.from_bytes(data[i], byteorder="big", signed=False)  # STM32 uses little-endian by default
-
-                
-                #data = np.array(data)
-                data = np.array([int.from_bytes(byte, byteorder="big", signed=False) for byte in data])
-                data = (data - data.min()) / data.max()
-                data = data * 255
-                data = data.astype(np.uint8)
 
                 with wave.open("output.wav", 'wb') as wave_file:    
                     wave_file.setnchannels(1)
