@@ -119,11 +119,11 @@ uint8_t sendBuffer[2];
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 	//HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-	/*sendBuffer[0] = (rxBuffer[0] + prevBuffer[0])>>1;
+	sendBuffer[0] = (rxBuffer[0] + prevBuffer[0])>>1;
 	sendBuffer[1] = (rxBuffer[1] + prevBuffer[1])>>1;
 
 	prevBuffer[0] = rxBuffer[0];
-	prevBuffer[1] = rxBuffer[1];*/
+	prevBuffer[1] = rxBuffer[1];
 }
 
 
